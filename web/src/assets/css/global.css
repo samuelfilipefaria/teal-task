@@ -1,0 +1,17 @@
+@font-face {
+  font-family: Quicksand;
+  src: url("../fonts/quicksand.ttf");
+}
+
+@font-face {
+  font-family: Edu TAS Beginner;
+  src: url("../fonts/edu_tas_beginner.ttf");
+}
+
+* {
+  font-family: Quicksand;
+}
+
+:root{
+  --el-color-primary: Teal;
+}
