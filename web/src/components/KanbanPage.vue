@@ -1,5 +1,5 @@
 <template lang="pug">
-h1 Kanban
+h1(style="text-align: center;") Kanban
 </template>
 
 <script>

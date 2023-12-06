@@ -1,12 +1,12 @@
 <template lang="pug">
+h1(style="text-align: center;") Pomodoro
 div(style="text-align: center;")
-  h1 Pomodoro
   el-progress(type="circle" :percentage="counterPercentage" color="#008080")
     box-icon(type="solid" name="hourglass")
   br
   h2 {{ displayText }}
   br
-  button.start-button(@click="buttonAction") {{ buttonText }}
+  el-button.start-button.custom-button(@click="buttonAction") {{ buttonText }}
 </template>
 
 <script>
@@ -69,21 +69,8 @@ export default {
 
 <style scoped>
 .start-button {
-  background-color: #008080;
-  color: #fff;
-  font-size: 20px;
-  font-weight: bold;
-  padding: 10px;
-  width: 120px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  border-bottom: solid 8px #025a5a;
-}
-
-.start-button:active {
-  transform: translateY(4px);
-  border-bottom: solid 4px #025a5a;
+  font-size: 20px !important;
+  width: 120px !important;
+  padding: 20px !important;
 }
 </style>

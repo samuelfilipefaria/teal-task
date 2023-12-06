@@ -1,4 +1,5 @@
 <template lang="pug">
+h1(style="text-align: center;") Calendar
 el-calendar(ref="mycal" v-model="selectedDate")
 </template>
 

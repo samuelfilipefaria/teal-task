@@ -15,3 +15,19 @@
 :root{
   --el-color-primary: Teal;
 }
+
+.custom-button, .custom-button:hover {
+  background-color: #008080 !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  border-radius: 4px !important;
+  border: none !important;
+  cursor: pointer !important;
+  outline: none !important;
+  border-bottom: solid 8px #025a5a !important;
+}
+
+.custom-button:active {
+  transform: translateY(4px) !important;
+  border-bottom: solid 4px #025a5a !important;
+}
