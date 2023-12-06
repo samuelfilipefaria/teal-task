@@ -9,13 +9,13 @@ div(style="text-align: center;")
         el-option(label="Blue" value="blue")
         el-option(label="Red" value="red")
     el-form-item
-      el-button.custom-button(@click="")
+      el-button.custom-button(@click="createTag")
         box-icon(name="check" color="white")
+
+  h1 {{ tags }}
 </template>
 
 <script>
-import { ref } from "vue";
-
 export default {
   name: "TagsPage",
   data() {
@@ -24,13 +24,13 @@ export default {
         text: "",
         color: "",
       },
-      dialogVisible: ref(false),
+      tags: JSON.parse(window.localStorage.getItem("tags")),
     };
   },
   methods: {
     createTag() {
-      alert(this.tagForm.text);
-      this.dialogVisible = false;
+      this.tags.push(this.tagForm);
+      window.localStorage.setItem("tags", JSON.stringify(this.tags));
     },
   },
 };
