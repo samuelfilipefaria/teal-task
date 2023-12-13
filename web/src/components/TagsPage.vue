@@ -12,7 +12,10 @@ div(style="text-align: center;")
       el-button.custom-button(@click="createTag")
         box-icon(name="check" color="white")
 
-  h1 {{ tags }}
+  ul
+    li(v-for="tag in tags" :key="tag.text" :class="{ 'red-text': !textColor(tag), 'blue-text': textColor(tag) }") 
+      hr
+      | {{ tag.text }}
 </template>
 
 <script>
@@ -24,7 +27,7 @@ export default {
         text: "",
         color: "",
       },
-      tags: JSON.parse(window.localStorage.getItem("tags")),
+      tags: JSON.parse(window.localStorage.getItem("tags")) || [],
     };
   },
   methods: {
@@ -32,6 +35,29 @@ export default {
       this.tags.push(this.tagForm);
       window.localStorage.setItem("tags", JSON.stringify(this.tags));
     },
+    textColor(tag) {
+      return tag.color == "blue" ? true : false;
+    },
   },
 };
 </script>
+
+<style scoped>
+li {
+  list-style: none;
+}
+
+.red-text {
+  color: red;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.blue-text {
+  color: blue;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+</style>
