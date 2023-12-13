@@ -1,5 +1,4 @@
 <template lang="pug">
-h1 hello!
 el-row
   el-col.grid-content(:span='4')
     side-menu
