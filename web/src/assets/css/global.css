@@ -31,3 +31,7 @@
   transform: translateY(4px) !important;
   border-bottom: solid 4px #025a5a !important;
 }
+
+.bolder {
+  font-weight: bolder;
+}

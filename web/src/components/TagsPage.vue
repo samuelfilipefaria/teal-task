@@ -6,16 +6,18 @@ div(style="text-align: center;")
       el-input(v-model="tagForm.text" placeholder="Text")
     el-form-item
       el-select(v-model="tagForm.color" placeholder="Color")
-        el-option(label="Blue" value="blue")
-        el-option(label="Red" value="red")
+        el-option.bolder(label="Teal" value="" style="color: #008080;")
+        el-option.bolder(label="Green" value="success" style="color: #67C23A;")
+        el-option.bolder(label="Gray" value="info" style="color: #909399;")
+        el-option.bolder(label="Orange" value="warning" style="color: #E6A23C;")
+        el-option.bolder(label="Red" value="danger" style="color: #F56C6C;")
     el-form-item
       el-button.custom-button(@click="createTag")
         box-icon(name="check" color="white")
 
-  ul
-    li(v-for="tag in tags" :key="tag.text" :class="{ 'red-text': !textColor(tag), 'blue-text': textColor(tag) }") 
-      hr
-      | {{ tag.text }}
+  div(v-for="tag in tags" :key="tag.text")
+    el-tag(:type='tag.color' effect="dark" size="large" style="margin-bottom: 10px; font-size: 20px; width: 200px;") {{ tag.text }}
+    br
 </template>
 
 <script>
@@ -32,32 +34,16 @@ export default {
   },
   methods: {
     createTag() {
-      this.tags.push(this.tagForm);
+      this.tags.push({
+        text: this.tagForm.text,
+        color: this.tagForm.color,
+      });
       window.localStorage.setItem("tags", JSON.stringify(this.tags));
+      this.cleanTagForm();
     },
-    textColor(tag) {
-      return tag.color == "blue" ? true : false;
+    cleanTagForm() {
+      this.tagForm.text = this.tagForm.color = "";
     },
   },
 };
 </script>
-
-<style scoped>
-li {
-  list-style: none;
-}
-
-.red-text {
-  color: red;
-  font-weight: bold;
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-
-.blue-text {
-  color: blue;
-  font-weight: bold;
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-</style>
