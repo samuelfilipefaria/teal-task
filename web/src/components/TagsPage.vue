@@ -34,12 +34,34 @@ export default {
   },
   methods: {
     createTag() {
+      if (this.isTagInvalid()) return;
+      this.saveTag();
+      this.cleanTagForm();
+    },
+    isTagInvalid() {
+      if (this.isTagEmpty() || this.isTagRepeated()) return true;
+      return false;
+    },
+    isTagEmpty() {
+      return this.tagForm.text.trim() == "" ? true : false;
+    },
+    isTagRepeated() {
+      const tagTexts = this.tags.map((tag) => tag.text);
+      const currentTagText = this.tagForm.text.trim();
+      const findCurrentText = (text) => text == currentTagText;
+
+      if (tagTexts.findIndex(findCurrentText) != -1) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    saveTag() {
       this.tags.push({
         text: this.tagForm.text,
         color: this.tagForm.color,
       });
       window.localStorage.setItem("tags", JSON.stringify(this.tags));
-      this.cleanTagForm();
     },
     cleanTagForm() {
       this.tagForm.text = this.tagForm.color = "";
