@@ -15,9 +15,13 @@ div(style="text-align: center;")
       el-button.custom-button(@click="createTag")
         box-icon(name="check" color="white")
 
-  div(v-for="tag in tags" :key="tag.text")
-    el-tag(:type='tag.color' effect="dark" size="large" style="margin-bottom: 10px; font-size: 20px; width: 200px;") {{ tag.text }}
-    br
+  table
+    tr(v-for="tag in tags" :key="tag.text")
+      td
+        el-tag.custom-tag(:type='tag.color' effect="dark" size="large") {{ tag.text }}
+      td
+        box-icon.tag-action-icon(name='edit' type="solid" color="teal")
+        box-icon.tag-action-icon(name='trash' type="solid" color="red")
 </template>
 
 <script>
@@ -69,3 +73,22 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+table {
+  margin: 0 auto;
+}
+
+.custom-tag {
+  width: 100px;
+  font-size: 20px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+.tag-action-icon {
+  margin-left: 10px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+</style>
