@@ -38,20 +38,28 @@ export default {
   },
   methods: {
     createTag() {
+      this.upperTagText();
+      this.removeAditionalSpaces();
       if (this.isTagInvalid()) return;
       this.saveTag();
       this.cleanTagForm();
+    },
+    upperTagText() {
+      this.tagForm.text = this.tagForm.text.toUpperCase();
+    },
+    removeAditionalSpaces() {
+      this.tagForm.text = this.tagForm.text.trim();
     },
     isTagInvalid() {
       if (this.isTagEmpty() || this.isTagRepeated()) return true;
       return false;
     },
     isTagEmpty() {
-      return this.tagForm.text.trim() == "" ? true : false;
+      return this.tagForm.text == "" ? true : false;
     },
     isTagRepeated() {
       const tagTexts = this.tags.map((tag) => tag.text);
-      const currentTagText = this.tagForm.text.trim();
+      const currentTagText = this.tagForm.text;
       const findCurrentText = (text) => text == currentTagText;
 
       if (tagTexts.findIndex(findCurrentText) != -1) {
