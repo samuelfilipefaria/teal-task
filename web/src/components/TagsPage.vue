@@ -12,16 +12,17 @@ div(style="text-align: center;")
         el-option.bolder(label="Orange" value="warning" style="color: #E6A23C;")
         el-option.bolder(label="Red" value="danger" style="color: #F56C6C;")
     el-form-item
-      el-button.custom-button(@click="createTag")
-        box-icon(name="check" color="white")
+      el-button.custom-button(@click="createTag" size="large")
+        box-icon(v-if="isEditing" name="edit-alt" color="white")
+        box-icon(v-else name="plus" color="white")
 
   table
     tr(v-for="tag in tags" :key="tag.text")
       td
         el-tag.custom-tag(:type='tag.color' effect="dark" size="large") {{ tag.text }}
       td
-        box-icon.tag-action-icon(name='edit' type="solid" color="teal" @click="editTag(tag.text)")
-        box-icon.tag-action-icon(name='trash' type="solid" color="red" @click="removeTag(tag.text)")
+        box-icon.tag-action-icon(name='edit' type="solid" color="teal" @click="editTag(tag)")
+        box-icon.tag-action-icon(name='trash' type="solid" color="red" @click="removeTag(tag)")
 </template>
 
 <script>
@@ -34,14 +35,33 @@ export default {
         color: "",
       },
       tags: JSON.parse(window.localStorage.getItem("tags")) || [],
+      isEditing: false,
     };
+  },
+  computed: {
+    saveButtonIcon() {
+      return this.isEditing ? "edit-alt" : "plus";
+    },
   },
   methods: {
     createTag() {
       this.upperTagText();
       this.removeAditionalSpaces();
       if (this.isTagInvalid()) return;
-      this.saveTag();
+
+      if (this.isEditing) {
+        const tag = { text: this.tagForm.text, color: this.tagForm.color };
+        const tagTexts = this.tags.map((tag) => tag.text);
+        const findCurrentText = (text) => text == tag.text;
+        const tagIndex = tagTexts.findIndex(findCurrentText);
+
+        this.tags.splice(tagIndex, 1, tag);
+        window.localStorage.setItem("tags", JSON.stringify(this.tags));
+        this.isEditing = false;
+      } else {
+        this.saveTag();
+      }
+
       this.cleanTagForm();
     },
     upperTagText() {
@@ -78,13 +98,23 @@ export default {
     cleanTagForm() {
       this.tagForm.text = this.tagForm.color = "";
     },
-    removeTag(tagText) {
+    removeTag(tag) {
       const tagTexts = this.tags.map((tag) => tag.text);
-      const findCurrentText = (text) => text == tagText;
+      const findCurrentText = (text) => text == tag.text;
       const tagIndex = tagTexts.findIndex(findCurrentText);
 
       this.tags.splice(tagIndex, 1);
       window.localStorage.setItem("tags", JSON.stringify(this.tags));
+    },
+    editTag(tag) {
+      this.isEditing = true;
+      this.putTagDataOnForm(tag);
+    },
+    putTagDataOnForm(tag) {
+      this.tagForm = {
+        text: tag.text,
+        color: tag.color,
+      };
     },
   },
 };
@@ -96,7 +126,7 @@ table {
 }
 
 .custom-tag {
-  width: 100px;
+  min-width: 100px;
   font-size: 20px;
   margin-bottom: 10px;
   margin-top: 5px;
