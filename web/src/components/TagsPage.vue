@@ -20,8 +20,8 @@ div(style="text-align: center;")
       td
         el-tag.custom-tag(:type='tag.color' effect="dark" size="large") {{ tag.text }}
       td
-        box-icon.tag-action-icon(name='edit' type="solid" color="teal")
-        box-icon.tag-action-icon(name='trash' type="solid" color="red")
+        box-icon.tag-action-icon(name='edit' type="solid" color="teal" @click="editTag(tag.text)")
+        box-icon.tag-action-icon(name='trash' type="solid" color="red" @click="removeTag(tag.text)")
 </template>
 
 <script>
@@ -77,6 +77,14 @@ export default {
     },
     cleanTagForm() {
       this.tagForm.text = this.tagForm.color = "";
+    },
+    removeTag(tagText) {
+      const tagTexts = this.tags.map((tag) => tag.text);
+      const findCurrentText = (text) => text == tagText;
+      const tagIndex = tagTexts.findIndex(findCurrentText);
+
+      this.tags.splice(tagIndex, 1);
+      window.localStorage.setItem("tags", JSON.stringify(this.tags));
     },
   },
 };
