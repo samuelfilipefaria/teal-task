@@ -13,7 +13,7 @@ div(style="text-align: center;")
         el-option.bolder(label="Red" value="danger" style="color: #F56C6C;")
     el-form-item
       el-button.custom-button(@click="createTag" size="large")
-        box-icon(v-if="isEditing" name="edit-alt" color="white")
+        box-icon(v-if="textBeforeEdition != undefined" name="edit-alt" color="white")
         box-icon(v-else name="plus" color="white")
 
   table
@@ -35,13 +35,8 @@ export default {
         color: "",
       },
       tags: JSON.parse(window.localStorage.getItem("tags")) || [],
-      isEditing: false,
+      textBeforeEdition: undefined,
     };
-  },
-  computed: {
-    saveButtonIcon() {
-      return this.isEditing ? "edit-alt" : "plus";
-    },
   },
   methods: {
     createTag() {
@@ -49,15 +44,16 @@ export default {
       this.removeAditionalSpaces();
       if (this.isTagInvalid()) return;
 
-      if (this.isEditing) {
+      if (this.textBeforeEdition != undefined) {
         const tag = { text: this.tagForm.text, color: this.tagForm.color };
         const tagTexts = this.tags.map((tag) => tag.text);
-        const findCurrentText = (text) => text == tag.text;
+        const findCurrentText = (text) => text == this.textBeforeEdition;
         const tagIndex = tagTexts.findIndex(findCurrentText);
+        console.log(tagIndex);
 
         this.tags.splice(tagIndex, 1, tag);
         window.localStorage.setItem("tags", JSON.stringify(this.tags));
-        this.isEditing = false;
+        this.textBeforeEdition = undefined;
       } else {
         this.saveTag();
       }
@@ -78,6 +74,8 @@ export default {
       return this.tagForm.text == "" ? true : false;
     },
     isTagRepeated() {
+      if (this.textBeforeEdition != undefined) return false;
+
       const tagTexts = this.tags.map((tag) => tag.text);
       const currentTagText = this.tagForm.text;
       const findCurrentText = (text) => text == currentTagText;
@@ -107,7 +105,7 @@ export default {
       window.localStorage.setItem("tags", JSON.stringify(this.tags));
     },
     editTag(tag) {
-      this.isEditing = true;
+      this.textBeforeEdition = tag.text;
       this.putTagDataOnForm(tag);
     },
     putTagDataOnForm(tag) {
