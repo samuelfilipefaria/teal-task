@@ -15,7 +15,7 @@ export default {
   data() {
     return {
       isCounting: false,
-      seconds: 9,
+      seconds: 6,
       isBreak: false,
       displayText:
         "Inicie a contagem quando estiver preparado para começar um ciclo pomodoro",
@@ -29,7 +29,7 @@ export default {
       return this.isCounting ? this.stopPomdoro : this.startPomodoro;
     },
     counterPercentage() {
-      let total = this.isBreak ? 4 : 9;
+      let total = this.isBreak ? 4 : 6;
       return (this.seconds * 100) / total;
     },
   },
@@ -42,7 +42,9 @@ export default {
     },
     stopPomdoro() {
       this.isCounting = false;
-      this.seconds = 9;
+      this.seconds = 6;
+      this.displayText =
+        "Inicie a contagem quando estiver preparado para começar um ciclo pomodoro";
     },
     decreaseOneSecond() {
       if (!this.isCounting) return;
@@ -50,18 +52,24 @@ export default {
       if (this.seconds == 0 && !this.isBreak) {
         this.isBreak = true;
         this.seconds = 4;
-        alert("Ei! Olha aqui, é hora de descansar um pouco.");
+        this.playNotification();
         this.displayText =
           "Você já se concentrou, hora de relaxar e descansar um pouquinho, te avisaremos quando for para voltar";
       } else if (this.seconds == 0 && this.isBreak) {
         this.isBreak = false;
-        this.seconds = 9;
-        alert("Ei! Olha aqui, é hora de se concentrar!!");
+        this.seconds = 6;
+        this.playNotification();
         this.displayText =
           "Pode se concentrar tranquilo, nós te avisaremos quando os 25 minutos acabarem";
       } else {
         this.seconds--;
       }
+    },
+    playNotification() {
+      const notificationAudio = new Audio(
+        require("../assets/audio/notification_sound.mp3")
+      );
+      notificationAudio.play();
     },
   },
 };
