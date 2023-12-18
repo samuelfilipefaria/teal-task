@@ -12,7 +12,7 @@ export default {
   name: "HomePage",
   computed: {
     numberOfTags() {
-      return JSON.parse(window.localStorage.getItem("tags")).length || 0;
+      return (JSON.parse(window.localStorage.getItem("tags")) || []).length;
     },
     formattedSelectedDate() {
       const currentDate = new Date();
