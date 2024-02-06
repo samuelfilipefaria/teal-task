@@ -1,7 +1,7 @@
 <template lang="pug">
 h1(style="text-align: center;") Kanban
 kanban-board(
-  :stages="stages"
+  :stages="colunms"
   :blocks="blocks"
   @openNewCardForm="openNewCardForm()"
   @openNewColumnForm="openNewColumnForm()"
@@ -15,7 +15,7 @@ el-dialog(v-model='dialogCardFormVisible' title='Novo cartão' width='500')
       el-input(type="textarea" v-model="cardFormData.description" placeholder="Descrição")
     el-form-item
       el-select(v-model='cardFormData.state' placeholder='Coluna')
-        el-option(v-for='stage in stages' :key='stage' :label='stage' :value='stage')
+        el-option(v-for='colunm in colunms' :key='colunm' :label='colunm' :value='colunm')
     el-form-item
       el-date-picker(v-model='cardFormData.dueDate' type='date' placeholder='Data de entrega')
 
@@ -37,32 +37,34 @@ export default {
   name: "KanbanPage",
   data() {
     return {
-      stages: [
-        {
-          title: "coluna 1",
-          color: "red",
-        },
-        {
-          title: "coluna 2",
-          color: "green",
-        },
-        {
-          title: "coluna 3",
-          color: "red",
-        },
-        {
-          title: "coluna 4",
-          color: "red",
-        },
-        {
-          title: "coluna 5",
-          color: "red",
-        },
-        {
-          title: "coluna 6",
-          color: "blue",
-        },
-      ],
+      colunms:
+        JSON.parse(window.localStorage.getItem("colunms")) ||
+        [].concat([
+          {
+            title: "coluna 1",
+            color: "red",
+          },
+          {
+            title: "coluna 2",
+            color: "green",
+          },
+          {
+            title: "coluna 3",
+            color: "red",
+          },
+          {
+            title: "coluna 4",
+            color: "red",
+          },
+          {
+            title: "coluna 5",
+            color: "red",
+          },
+          {
+            title: "coluna 6",
+            color: "blue",
+          },
+        ]),
       blocks: [
         {
           id: 1,
