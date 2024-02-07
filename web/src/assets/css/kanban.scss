@@ -7,13 +7,15 @@ ul.drag-list, ul.drag-inner-list {
 }
 
 .drag-container {
-    max-width: 1000px;
+    max-width: 100000px;
     margin: 20px auto;
 }
 
 .drag-list {
     display: flex;
     align-items: flex-start;
+    min-width: 400px;
+    max-width: 2000px;
 
     @media (max-width: 690px) {
         display: block;
@@ -28,6 +30,8 @@ ul.drag-list, ul.drag-inner-list {
     background: #f3f3f3;
     border-radius: 10px;
     overflow: hidden;
+    min-width: 200px;
+    max-width: 200px;
 
     @media (max-width: 690px) {
         margin-bottom: 30px;

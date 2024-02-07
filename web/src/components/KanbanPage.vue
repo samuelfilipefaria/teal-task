@@ -1,26 +1,29 @@
 <template lang="pug">
 h1(style="text-align: center;") Kanban
 kanban-board(
-  :stages="colunms"
-  :blocks="blocks"
+  :stages="columns"
+  :blocks="cards"
   @openNewCardForm="openNewCardForm()"
   @openNewColumnForm="openNewColumnForm()"
   @update-block="updateBlock"
 )
 el-dialog(v-model='dialogCardFormVisible' title='Novo cartão' width='500')
-  form
+  el-form
     el-form-item
       el-input(v-model="cardFormData.title" placeholder="Título")
     el-form-item
       el-input(type="textarea" v-model="cardFormData.description" placeholder="Descrição")
     el-form-item
-      el-select(v-model='cardFormData.state' placeholder='Coluna')
-        el-option(v-for='colunm in colunms' :key='colunm' :label='colunm' :value='colunm')
+      el-select(v-model='cardFormData.status' placeholder='Coluna')
+        el-option(v-for='column in columns' :key='column.title' :label='column.title' :value='column.title')
     el-form-item
       el-date-picker(v-model='cardFormData.dueDate' type='date' placeholder='Data de entrega')
+    el-form-item
+      el-button.custom-button(@click="createCard" size="large")
+        box-icon(name="plus" color="white")
 
 el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
-  form
+  el-form
     el-form-item
       el-input(v-model="columnFormData.title" placeholder="Título")
     el-form-item
@@ -30,6 +33,9 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
         el-option.bolder(label="Gray" value="#909399" style="color: #909399;")
         el-option.bolder(label="Orange" value="#E6A23C" style="color: #E6A23C;")
         el-option.bolder(label="Red" value="#F56C6C" style="color: #F56C6C;")
+    el-form-item
+      el-button.custom-button(@click="createColumn" size="large")
+        box-icon(name="plus" color="white")
 </template>
 
 <script>
@@ -37,52 +43,14 @@ export default {
   name: "KanbanPage",
   data() {
     return {
-      colunms:
-        JSON.parse(window.localStorage.getItem("colunms")) ||
-        [].concat([
-          {
-            title: "coluna 1",
-            color: "red",
-          },
-          {
-            title: "coluna 2",
-            color: "green",
-          },
-          {
-            title: "coluna 3",
-            color: "red",
-          },
-          {
-            title: "coluna 4",
-            color: "red",
-          },
-          {
-            title: "coluna 5",
-            color: "red",
-          },
-          {
-            title: "coluna 6",
-            color: "blue",
-          },
-        ]),
-      blocks: [
-        {
-          id: 1,
-          status: "coluna 1",
-          title: "Cartão 1",
-        },
-        {
-          id: 2,
-          status: "coluna 1",
-          title: "Cartão 2",
-        },
-      ],
+      columns: JSON.parse(window.localStorage.getItem("columns")) || [],
+      cards: JSON.parse(window.localStorage.getItem("cards")) || [],
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
       cardFormData: {
         title: "",
         description: "",
-        state: "",
+        status: "",
         dueDate: new Date(),
       },
       columnFormData: {
@@ -94,7 +62,7 @@ export default {
   methods: {
     updateBlock(id, status) {
       console.log("mudou!");
-      this.blocks.find((b) => b.id === Number(id)).status = status;
+      this.cards.find((b) => b.id === Number(id)).status = status;
     },
     card_click() {
       console.log("clicou!");
@@ -104,6 +72,42 @@ export default {
     },
     openNewColumnForm() {
       this.dialogColumnFormVisible = true;
+    },
+    createColumn() {
+      this.columns.push({
+        title: this.columnFormData.title,
+        color: this.columnFormData.color,
+      });
+      window.localStorage.setItem("columns", JSON.stringify(this.columns));
+    },
+    createCard() {
+      this.saveCard();
+      this.cleanCardForm();
+    },
+    saveCard() {
+      console.log(this.cards);
+      const cards_ids = this.cards.map((card) => card.id);
+      const greatest_card_id = Math.max(cards_ids);
+
+      let newCard = {
+        id: null,
+        title: this.cardFormData.title,
+        description: this.cardFormData.description,
+        status: this.cardFormData.status,
+        dueDate: this.cardFormData.dueDate,
+      };
+
+      newCard.id = isNaN(greatest_card_id) ? 1 : greatest_card_id + 1;
+
+      this.cards.push(newCard);
+      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+      console.log("greatest_card_id: " + greatest_card_id);
+    },
+    cleanCardForm() {
+      this.cardFormData.title = "";
+      this.cardFormData.description = "";
+      this.cardFormData.status = "";
+      this.cardFormData.dueDate = new Date();
     },
   },
 };
