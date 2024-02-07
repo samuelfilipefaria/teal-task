@@ -60,9 +60,10 @@ export default {
     };
   },
   methods: {
-    updateBlock(id, status) {
-      console.log("mudou!");
-      this.cards.find((b) => b.id === Number(id)).status = status;
+    updateBlock(blockId, newState) {
+      const foundCard = this.cards.find((card) => card.id == blockId);
+      foundCard.status = newState;
+      window.localStorage.setItem("cards", JSON.stringify(this.cards));
     },
     card_click() {
       console.log("clicou!");
@@ -85,9 +86,7 @@ export default {
       this.cleanCardForm();
     },
     saveCard() {
-      console.log(this.cards);
       const cards_ids = this.cards.map((card) => card.id);
-      const greatest_card_id = Math.max(cards_ids);
 
       let newCard = {
         id: null,
@@ -97,11 +96,15 @@ export default {
         dueDate: this.cardFormData.dueDate,
       };
 
-      newCard.id = isNaN(greatest_card_id) ? 1 : greatest_card_id + 1;
+      if (cards_ids.length == 0) {
+        newCard.id = 1;
+      } else {
+        const greatest_card_id = Math.max(...cards_ids);
+        newCard.id = greatest_card_id + 1;
+      }
 
       this.cards.push(newCard);
       window.localStorage.setItem("cards", JSON.stringify(this.cards));
-      console.log("greatest_card_id: " + greatest_card_id);
     },
     cleanCardForm() {
       this.cardFormData.title = "";
