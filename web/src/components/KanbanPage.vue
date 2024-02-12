@@ -1,8 +1,9 @@
 <template lang="pug">
 h1(style="text-align: center;") Kanban
 kanban-board(
-  :stages="columns"
+  :stages="orderedColumns()"
   :blocks="cards"
+  @openCard="openCard"
   @openNewCardForm="openNewCardForm()"
   @openNewColumnForm="openNewColumnForm()"
   @update-block="updateBlock"
@@ -27,6 +28,8 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
     el-form-item
       el-input(v-model="columnFormData.title" placeholder="Título")
     el-form-item
+      el-input(v-model="columnFormData.position" placeholder="Posição")
+    el-form-item
       el-select(v-model="columnFormData.color" placeholder="Cor")
         el-option.bolder(label="Teal" value="#008080" style="color: #008080;")
         el-option.bolder(label="Green" value="#67C23A" style="color: #67C23A;")
@@ -36,6 +39,12 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
     el-form-item
       el-button.custom-button(@click="createColumn" size="large")
         box-icon(name="plus" color="white")
+
+el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
+  template(#footer)
+    .dialog-footer
+      box-icon.tag-action-icon(type="solid" name="edit" color="teal")
+      box-icon.tag-action-icon(type="solid" name="trash" color="red")
 </template>
 
 <script>
@@ -43,26 +52,85 @@ export default {
   name: "KanbanPage",
   data() {
     return {
+      currentCard: {},
       columns: JSON.parse(window.localStorage.getItem("columns")) || [],
       cards: JSON.parse(window.localStorage.getItem("cards")) || [],
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
+      dialogShowCard: false,
       cardFormData: {
         title: "",
         description: "",
         status: "",
+        position: "",
         dueDate: new Date(),
       },
       columnFormData: {
         title: "",
         color: "",
+        position: "",
       },
     };
   },
   methods: {
-    updateBlock(blockId, newState) {
+    orderedColumns() {
+      return this.columns.sort(function (a, b) {
+        if (a.position < b.position) {
+          return -1;
+        }
+
+        if (a.position > b.position) {
+          return 1;
+        }
+      });
+    },
+    updateBlock(blockId, newState, index) {
       const foundCard = this.cards.find((card) => card.id == blockId);
+
+      if (newState == foundCard.status) {
+        if (index < foundCard.position) {
+          this.cards
+            .filter((card) => card.status == foundCard.status)
+            .forEach(function (card) {
+              if (
+                card.position < foundCard.position &&
+                card.position >= index
+              ) {
+                card.position++;
+              }
+            });
+        } else if (index > foundCard.position) {
+          this.cards
+            .filter((card) => card.status == foundCard.status)
+            .forEach(function (card) {
+              if (
+                card.position > foundCard.position &&
+                card.position <= index
+              ) {
+                card.position--;
+              }
+            });
+        }
+      } else {
+        this.cards
+          .filter((card) => card.status == foundCard.status)
+          .forEach(function (card) {
+            if (card.position > foundCard.position) {
+              card.position--;
+            }
+          });
+        this.cards
+          .filter((card) => card.status == newState)
+          .forEach(function (card) {
+            if (card.position >= index) {
+              card.position++;
+            }
+          });
+      }
+
       foundCard.status = newState;
+      foundCard.position = index;
+
       window.localStorage.setItem("cards", JSON.stringify(this.cards));
     },
     card_click() {
@@ -78,6 +146,7 @@ export default {
       this.columns.push({
         title: this.columnFormData.title,
         color: this.columnFormData.color,
+        position: this.columnFormData.position,
       });
       window.localStorage.setItem("columns", JSON.stringify(this.columns));
     },
@@ -93,6 +162,7 @@ export default {
         title: this.cardFormData.title,
         description: this.cardFormData.description,
         status: this.cardFormData.status,
+        position: 0,
         dueDate: this.cardFormData.dueDate,
       };
 
@@ -101,6 +171,16 @@ export default {
       } else {
         const greatest_card_id = Math.max(...cards_ids);
         newCard.id = greatest_card_id + 1;
+      }
+
+      const lastPositionOnColumn = Math.max(
+        ...this.cards
+          .filter((card) => card.status == newCard.status)
+          .map((card) => card.position)
+      );
+
+      if (Number.isInteger(lastPositionOnColumn)) {
+        newCard.position = lastPositionOnColumn + 1;
       }
 
       this.cards.push(newCard);
@@ -112,10 +192,23 @@ export default {
       this.cardFormData.status = "";
       this.cardFormData.dueDate = new Date();
     },
+    openCard(cardId) {
+      console.log("cardId: " + cardId);
+      this.currentCard = this.cards.find((card) => card.id == cardId);
+      this.dialogShowCard = true;
+    },
   },
 };
 </script>
 
 <style lang="scss">
 @import "../assets/css/kanban.scss";
+</style>
+
+<style scoped>
+.tag-action-icon {
+  margin-left: 10px;
+  margin-top: 2px;
+  cursor: pointer;
+}
 </style>
