@@ -41,10 +41,25 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
         box-icon(name="plus" color="white")
 
 el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
+  h2 Descrição
+  p(v-if="currentCard.description.trim() != ''") {{ currentCard.description }}
+  p(v-else style="font-style: italic; font-weight: bold;") Sem descrição
+
+  h2 Estado
+  p {{ currentCard.status }}
+
+  h2 Data de entrega
+  p {{ dateInBrazilianFormat }}
+
   template(#footer)
     .dialog-footer
-      box-icon.tag-action-icon(type="solid" name="edit" color="teal")
-      box-icon.tag-action-icon(type="solid" name="trash" color="red")
+      box-icon.tag-action-icon(@click="editCard()" type="solid" name="edit" color="teal")
+      box-icon.tag-action-icon(@click="confirmationDeletionCardDialog = true" type="solid" name="trash" color="red")
+
+el-dialog(v-model='confirmationDeletionCardDialog' title='Confirmação' width='500')
+  p Tem certeza que deseja deletar esse cartão? Essa ação não poderá ser desfeita.
+  div(style="text-align: center;")
+    el-button(@click="deleteCard()") Sim
 </template>
 
 <script>
@@ -58,6 +73,7 @@ export default {
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
       dialogShowCard: false,
+      confirmationDeletionCardDialog: false,
       cardFormData: {
         title: "",
         description: "",
@@ -72,7 +88,33 @@ export default {
       },
     };
   },
+  computed: {
+    dateInBrazilianFormat() {
+      const date = new Date(this.currentCard.dueDate);
+
+      const day = date.getDate();
+      const month = date.getMonth();
+      const year = date.getFullYear();
+
+      return `${day}/${month}/${year}`;
+    },
+  },
   methods: {
+    editCard() {
+      console.log("editando");
+    },
+    deleteCard() {
+      this.confirmationDeletionCardDialog = false;
+      this.dialogShowCard = false;
+
+      const deletedCardIndex = this.cards.findIndex(
+        (card) => card.id == this.currentCard.id
+      );
+
+      this.cards.splice(deletedCardIndex, 1);
+
+      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+    },
     orderedColumns() {
       return this.columns.sort(function (a, b) {
         if (a.position < b.position) {
@@ -133,9 +175,6 @@ export default {
 
       window.localStorage.setItem("cards", JSON.stringify(this.cards));
     },
-    card_click() {
-      console.log("clicou!");
-    },
     openNewCardForm() {
       this.dialogCardFormVisible = true;
     },
@@ -193,7 +232,6 @@ export default {
       this.cardFormData.dueDate = new Date();
     },
     openCard(cardId) {
-      console.log("cardId: " + cardId);
       this.currentCard = this.cards.find((card) => card.id == cardId);
       this.dialogShowCard = true;
     },
