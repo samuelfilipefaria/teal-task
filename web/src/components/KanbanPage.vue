@@ -8,7 +8,7 @@ kanban-board(
   @openNewColumnForm="openNewColumnForm()"
   @update-block="updateBlock"
 )
-el-dialog(v-model='dialogCardFormVisible' title='Novo cartão' width='500')
+el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500')
   el-form
     el-form-item
       el-input(v-model="cardFormData.title" placeholder="Título")
@@ -20,7 +20,9 @@ el-dialog(v-model='dialogCardFormVisible' title='Novo cartão' width='500')
     el-form-item
       el-date-picker(v-model='cardFormData.dueDate' type='date' placeholder='Data de entrega')
     el-form-item
-      el-button.custom-button(@click="createCard" size="large")
+      el-button.custom-button(v-if="isEditingCard" @click="saveCardEdition" size="large")
+        box-icon(name="edit" color="white")
+      el-button.custom-button(v-else @click="createCard" size="large")
         box-icon(name="plus" color="white")
 
 el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
@@ -86,14 +88,34 @@ export default {
         color: "",
         position: "",
       },
+      isEditingColumn: false,
+      isEditingCard: false,
     };
   },
+  watch: {
+    dialogCardFormVisible(visibility) {
+      if (visibility == false && this.isEditingCard) {
+        this.cardFormData = {
+          title: "",
+          description: "",
+          status: "",
+          position: "",
+          dueDate: new Date(),
+        };
+
+        this.isEditingCard = false;
+      }
+    },
+  },
   computed: {
+    dialogCardFormTitle() {
+      return this.isEditingCard ? "Editando cartão" : "Novo cartão";
+    },
     dateInBrazilianFormat() {
       const date = new Date(this.currentCard.dueDate);
 
       const day = date.getDate();
-      const month = date.getMonth();
+      const month = date.getMonth() + 1;
       const year = date.getFullYear();
 
       return `${day}/${month}/${year}`;
@@ -101,7 +123,9 @@ export default {
   },
   methods: {
     editCard() {
-      console.log("editando");
+      this.isEditingCard = true;
+      this.cardFormData = this.currentCard;
+      this.dialogCardFormVisible = true;
     },
     deleteCard() {
       this.confirmationDeletionCardDialog = false;
@@ -188,6 +212,25 @@ export default {
         position: this.columnFormData.position,
       });
       window.localStorage.setItem("columns", JSON.stringify(this.columns));
+    },
+    saveCardEdition() {
+      const editedCardIndex = this.cards.findIndex(
+        (card) => card.id == this.currentCard.id
+      );
+
+      const editedCard = {
+        id: this.currentCard.id,
+        title: this.cardFormData.title,
+        description: this.cardFormData.description,
+        status: this.cardFormData.status,
+        position: this.cardFormData.position,
+        dueDate: this.cardFormData.dueDate,
+      };
+
+      this.cards.splice(editedCardIndex, 1, editedCard);
+
+      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+      this.dialogCardFormVisible = false;
     },
     createCard() {
       this.saveCard();
