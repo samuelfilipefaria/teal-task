@@ -8,7 +8,7 @@ kanban-board(
   @openNewColumnForm="openNewColumnForm()"
   @update-block="updateBlock"
   @editColumn="editColumn"
-  @deleteColumn="deleteColumn"
+  @deleteColumn="showDeleteColumnConfirmationDialog"
 )
 el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500' fullscreen)
   el-form
@@ -67,6 +67,11 @@ el-dialog(v-model='confirmationDeletionCardDialog' title='Confirmação' width='
   p Tem certeza que deseja deletar esse cartão? Essa ação não poderá ser desfeita.
   div(style="text-align: center;")
     el-button(@click="deleteCard()") Sim
+
+el-dialog(v-model='confirmationDeletionColumnDialog' title='Confirmação' width='500')
+  p Tem certeza que deseja deletar essa coluna? <b>TODOS</b> os cartões presentes nela serão também deletados. Essa ação não poderá ser desfeita.
+  div(style="text-align: center;")
+    el-button(@click="deleteColumn()") Sim
 </template>
 
 <script>
@@ -75,6 +80,7 @@ export default {
   data() {
     return {
       currentCard: {},
+      currentColumn: {},
       oldColumn: {},
       columns: JSON.parse(window.localStorage.getItem("columns")) || [],
       cards: JSON.parse(window.localStorage.getItem("cards")) || [],
@@ -82,6 +88,7 @@ export default {
       dialogColumnFormVisible: false,
       dialogShowCard: false,
       confirmationDeletionCardDialog: false,
+      confirmationDeletionColumnDialog: false,
       cardFormData: {
         title: "",
         description: "",
@@ -161,14 +168,48 @@ export default {
     },
   },
   methods: {
+    showDeleteColumnConfirmationDialog(column) {
+      this.currentColumn = column;
+      this.confirmationDeletionColumnDialog = true;
+    },
     editColumn(column) {
       this.oldColumn = { ...column };
       this.isEditingColumn = true;
       this.columnFormData = column;
       this.dialogColumnFormVisible = true;
     },
-    deleteColumn(column) {
-      console.log(column);
+    deleteColumn() {
+      this.confirmationDeletionColumnDialog = false;
+
+      const deletedColumnIndex = this.columns.findIndex(
+        (comparingColumn) => comparingColumn.id == this.currentColumn.id
+      );
+
+      const columnsWithAGreaterPosition = this.columns.filter(
+        (column) => column.position > this.currentColumn.position
+      );
+
+      columnsWithAGreaterPosition.forEach(function decreaseOnePosition(column) {
+        column.position--;
+      });
+
+      const cardsToDelete = this.cards.filter(
+        (card) => card.status == this.currentColumn.title
+      );
+
+      for (let i = 0; i < cardsToDelete.length; i++) {
+        let deletedCardIndex = this.cards.findIndex(
+          (comparingCard) => comparingCard.id == cardsToDelete[i].id
+        );
+
+        this.cards.splice(deletedCardIndex, 1);
+      }
+
+      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+
+      this.columns.splice(deletedColumnIndex, 1);
+
+      window.localStorage.setItem("columns", JSON.stringify(this.columns));
     },
     editCard() {
       this.isEditingCard = true;
@@ -182,6 +223,14 @@ export default {
       const deletedCardIndex = this.cards.findIndex(
         (card) => card.id == this.currentCard.id
       );
+
+      const cardsWithAGreaterPosition = this.cards.filter(
+        (card) => card.position > this.currentCard.position
+      );
+
+      cardsWithAGreaterPosition.forEach(function decreaseOnePosition(card) {
+        card.position--;
+      });
 
       this.cards.splice(deletedCardIndex, 1);
 
@@ -295,9 +344,6 @@ export default {
 
       const oldPosition = this.oldColumn.position;
       const newPosition = editedColumn.position;
-
-      console.log(oldPosition);
-      console.log(newPosition);
 
       if (oldPosition < newPosition) {
         const columnsToModify = this.columns.filter(
