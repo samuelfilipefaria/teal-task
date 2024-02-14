@@ -7,8 +7,10 @@ kanban-board(
   @openNewCardForm="openNewCardForm()"
   @openNewColumnForm="openNewColumnForm()"
   @update-block="updateBlock"
+  @editColumn="editColumn"
+  @deleteColumn="deleteColumn"
 )
-el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500')
+el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500' fullscreen)
   el-form
     el-form-item
       el-input(v-model="cardFormData.title" placeholder="Título")
@@ -25,12 +27,13 @@ el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='50
       el-button.custom-button(v-else @click="createCard" size="large")
         box-icon(name="plus" color="white")
 
-el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
+el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500' fullscreen)
   el-form
     el-form-item
       el-input(v-model="columnFormData.title" placeholder="Título")
     el-form-item
-      el-input(v-model="columnFormData.position" placeholder="Posição")
+      el-select(v-model='columnFormData.position' placeholder='Posição')
+        el-option(v-for='position in columnsPositions' :key='position' :label='position' :value='position')
     el-form-item
       el-select(v-model="columnFormData.color" placeholder="Cor")
         el-option.bolder(label="Teal" value="#008080" style="color: #008080;")
@@ -39,7 +42,9 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500')
         el-option.bolder(label="Orange" value="#E6A23C" style="color: #E6A23C;")
         el-option.bolder(label="Red" value="#F56C6C" style="color: #F56C6C;")
     el-form-item
-      el-button.custom-button(@click="createColumn" size="large")
+      el-button.custom-button(v-if="isEditingColumn" @click="saveColumnEdition" size="large")
+        box-icon(name="edit" color="white")
+      el-button.custom-button(v-else @click="createColumn" size="large")
         box-icon(name="plus" color="white")
 
 el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
@@ -70,6 +75,7 @@ export default {
   data() {
     return {
       currentCard: {},
+      oldColumn: {},
       columns: JSON.parse(window.localStorage.getItem("columns")) || [],
       cards: JSON.parse(window.localStorage.getItem("cards")) || [],
       dialogCardFormVisible: false,
@@ -106,6 +112,18 @@ export default {
         this.isEditingCard = false;
       }
     },
+    dialogColumnFormVisible(visibility) {
+      if (visibility == false && this.isEditingColumn) {
+        this.columnFormData = {
+          title: "",
+          color: "",
+          position: "",
+        };
+
+        this.oldColumn = {};
+        this.isEditingColumn = false;
+      }
+    },
   },
   computed: {
     dialogCardFormTitle() {
@@ -120,8 +138,38 @@ export default {
 
       return `${day}/${month}/${year}`;
     },
+    columnsPositions() {
+      const lastPosition = Math.max(
+        ...this.columns.map((column) => column.position)
+      );
+
+      if (this.isEditingColumn) {
+        return Array.from(
+          { length: lastPosition },
+          (value, index) => index + 1
+        );
+      } else {
+        if (Number.isInteger(lastPosition)) {
+          return Array.from(
+            { length: lastPosition + 1 },
+            (value, index) => index + 1
+          );
+        } else {
+          return [1];
+        }
+      }
+    },
   },
   methods: {
+    editColumn(column) {
+      this.oldColumn = { ...column };
+      this.isEditingColumn = true;
+      this.columnFormData = column;
+      this.dialogColumnFormVisible = true;
+    },
+    deleteColumn(column) {
+      console.log(column);
+    },
     editCard() {
       this.isEditingCard = true;
       this.cardFormData = this.currentCard;
@@ -206,12 +254,72 @@ export default {
       this.dialogColumnFormVisible = true;
     },
     createColumn() {
-      this.columns.push({
+      const columnsIds = this.columns.map((column) => column.id);
+
+      let newColumn = {
+        id: null,
         title: this.columnFormData.title,
         color: this.columnFormData.color,
         position: this.columnFormData.position,
+      };
+
+      const columnsWithAGreaterPosition = this.columns.filter(
+        (column) => column.position >= newColumn.position
+      );
+
+      columnsWithAGreaterPosition.forEach(function increaseOnePosition(column) {
+        column.position++;
       });
+
+      if (columnsIds.length == 0) {
+        newColumn.id = 1;
+      } else {
+        const greatestColumnId = Math.max(...columnsIds);
+        newColumn.id = greatestColumnId + 1;
+      }
+
+      this.columns.push(newColumn);
       window.localStorage.setItem("columns", JSON.stringify(this.columns));
+    },
+    saveColumnEdition() {
+      const editedColumnIndex = this.columns.findIndex(
+        (column) => column.id == this.columnFormData.id
+      );
+
+      const editedColumn = {
+        id: this.columnFormData.id,
+        title: this.columnFormData.title,
+        color: this.columnFormData.color,
+        position: this.columnFormData.position,
+      };
+
+      const oldPosition = this.oldColumn.position;
+      const newPosition = editedColumn.position;
+
+      console.log(oldPosition);
+      console.log(newPosition);
+
+      if (oldPosition < newPosition) {
+        const columnsToModify = this.columns.filter(
+          (column) =>
+            column.position <= newPosition && column.position > oldPosition
+        );
+        columnsToModify.forEach((column) => column.position--);
+      }
+
+      if (oldPosition > newPosition) {
+        const columnsToModify = this.columns.filter(
+          (column) =>
+            column.position >= newPosition && column.position < oldPosition
+        );
+        columnsToModify.forEach((column) => column.position++);
+      }
+
+      this.columns.splice(editedColumnIndex, 1, editedColumn);
+
+      window.localStorage.setItem("columns", JSON.stringify(this.columns));
+      this.oldColumn = {};
+      this.dialogColumnFormVisible = false;
     },
     saveCardEdition() {
       const editedCardIndex = this.cards.findIndex(
