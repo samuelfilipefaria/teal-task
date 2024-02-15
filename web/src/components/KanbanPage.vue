@@ -117,6 +117,7 @@ export default {
         };
 
         this.isEditingCard = false;
+        this.cleanALLAuxiliaryVariables();
       }
     },
     dialogColumnFormVisible(visibility) {
@@ -129,6 +130,7 @@ export default {
 
         this.oldColumn = {};
         this.isEditingColumn = false;
+        this.cleanALLAuxiliaryVariables();
       }
     },
   },
@@ -329,6 +331,8 @@ export default {
 
       this.columns.push(newColumn);
       window.localStorage.setItem("columns", JSON.stringify(this.columns));
+      this.cleanColumnForm();
+      this.cleanALLAuxiliaryVariables();
     },
     saveColumnEdition() {
       const editedColumnIndex = this.columns.findIndex(
@@ -341,6 +345,21 @@ export default {
         color: this.columnFormData.color,
         position: this.columnFormData.position,
       };
+
+      const oldTitle = this.oldColumn.title;
+      const newTitle = editedColumn.title;
+
+      if (oldTitle.trim() != newTitle.trim()) {
+        const cardsToUpdate = this.cards.filter(
+          (card) => card.status == oldTitle
+        );
+
+        cardsToUpdate.forEach(function changeColumnName(card) {
+          card.status = newTitle.trim();
+        });
+
+        window.localStorage.setItem("cards", JSON.stringify(this.cards));
+      }
 
       const oldPosition = this.oldColumn.position;
       const newPosition = editedColumn.position;
@@ -366,6 +385,8 @@ export default {
       window.localStorage.setItem("columns", JSON.stringify(this.columns));
       this.oldColumn = {};
       this.dialogColumnFormVisible = false;
+      this.cleanColumnForm();
+      this.cleanALLAuxiliaryVariables();
     },
     saveCardEdition() {
       const editedCardIndex = this.cards.findIndex(
@@ -385,10 +406,12 @@ export default {
 
       window.localStorage.setItem("cards", JSON.stringify(this.cards));
       this.dialogCardFormVisible = false;
+      this.cleanALLAuxiliaryVariables();
     },
     createCard() {
       this.saveCard();
       this.cleanCardForm();
+      this.cleanALLAuxiliaryVariables();
     },
     saveCard() {
       const cards_ids = this.cards.map((card) => card.id);
@@ -428,9 +451,33 @@ export default {
       this.cardFormData.status = "";
       this.cardFormData.dueDate = new Date();
     },
+    cleanColumnForm() {
+      this.columnFormData.title = "";
+      this.columnFormData.position = "";
+      this.columnFormData.color = "";
+    },
     openCard(cardId) {
       this.currentCard = this.cards.find((card) => card.id == cardId);
       this.dialogShowCard = true;
+    },
+    cleanALLAuxiliaryVariables() {
+      this.currentCard = {};
+      this.currentColumn = {};
+      this.oldColumn = {};
+      this.cardFormData = {
+        title: "",
+        description: "",
+        status: "",
+        position: "",
+        dueDate: new Date(),
+      };
+      this.columnFormData = {
+        title: "",
+        color: "",
+        position: "",
+      };
+      this.isEditingColumn = false;
+      this.isEditingCard = false;
     },
   },
 };
