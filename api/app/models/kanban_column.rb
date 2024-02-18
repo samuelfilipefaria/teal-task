@@ -1,0 +1,2 @@
+class KanbanColumn < ApplicationRecord
+end
