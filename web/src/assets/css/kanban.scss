@@ -14,7 +14,7 @@ ul.drag-list, ul.drag-inner-list {
 .drag-list {
     display: flex;
     align-items: flex-start;
-    min-width: 400px;
+    min-width: 200px;
     max-width: 2000px;
 
     @media (max-width: 690px) {
