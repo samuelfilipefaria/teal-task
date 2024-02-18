@@ -1,15 +1,21 @@
 <template lang="pug">
 h1(style="text-align: center;") Kanban
-kanban-board(
-  :stages="orderedColumns()"
-  :blocks="cards"
-  @openCard="openCard"
-  @openNewCardForm="openNewCardForm()"
-  @openNewColumnForm="openNewColumnForm()"
-  @update-block="updateBlock"
-  @editColumn="editColumn"
-  @deleteColumn="showDeleteColumnConfirmationDialog"
-)
+div
+  div(style="display: inline-block;")
+    kanban-board(
+      v-if="columns.length > 0"
+      :stages="orderedColumns()"
+      :blocks="cards"
+      @openCard="openCard"
+      @openNewCardForm="openNewCardForm()"
+      @update-block="updateBlock"
+      @editColumn="editColumn"
+      @deleteColumn="showDeleteColumnConfirmationDialog"
+    )
+  div(style="display: inline-block;")
+    el-button.custom-button(@click="openNewColumnForm()" size='large')
+      box-icon(name='list-plus' color='white')
+
 el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500' fullscreen)
   el-form
     el-form-item
@@ -34,6 +40,7 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500' full
     el-form-item
       el-select(v-model='columnFormData.position' placeholder='Posição')
         el-option(v-for='position in columnsPositions' :key='position' :label='position' :value='position')
+      span(style="margin-left: 5px;") Atenção: a posição de uma coluna afeta todas as outras
     el-form-item
       el-select(v-model="columnFormData.color" placeholder="Cor")
         el-option.bolder(label="Teal" value="#008080" style="color: #008080;")
@@ -75,6 +82,8 @@ el-dialog(v-model='confirmationDeletionColumnDialog' title='Confirmação' width
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "KanbanPage",
   data() {
@@ -82,7 +91,7 @@ export default {
       currentCard: {},
       currentColumn: {},
       oldColumn: {},
-      columns: JSON.parse(window.localStorage.getItem("columns")) || [],
+      columns: [],
       cards: JSON.parse(window.localStorage.getItem("cards")) || [],
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
@@ -103,6 +112,7 @@ export default {
       },
       isEditingColumn: false,
       isEditingCard: false,
+      isLoading: true,
     };
   },
   watch: {
@@ -183,35 +193,16 @@ export default {
     deleteColumn() {
       this.confirmationDeletionColumnDialog = false;
 
-      const deletedColumnIndex = this.columns.findIndex(
-        (comparingColumn) => comparingColumn.id == this.currentColumn.id
-      );
+      axios
+        .delete("http://127.0.0.1:3000/kanban_columns/" + this.currentColumn.id)
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
 
-      const columnsWithAGreaterPosition = this.columns.filter(
-        (column) => column.position > this.currentColumn.position
-      );
-
-      columnsWithAGreaterPosition.forEach(function decreaseOnePosition(column) {
-        column.position--;
-      });
-
-      const cardsToDelete = this.cards.filter(
-        (card) => card.status == this.currentColumn.title
-      );
-
-      for (let i = 0; i < cardsToDelete.length; i++) {
-        let deletedCardIndex = this.cards.findIndex(
-          (comparingCard) => comparingCard.id == cardsToDelete[i].id
-        );
-
-        this.cards.splice(deletedCardIndex, 1);
-      }
-
-      window.localStorage.setItem("cards", JSON.stringify(this.cards));
-
-      this.columns.splice(deletedColumnIndex, 1);
-
-      window.localStorage.setItem("columns", JSON.stringify(this.columns));
+      window.location.reload();
     },
     editCard() {
       this.isEditingCard = true;
@@ -305,88 +296,36 @@ export default {
       this.dialogColumnFormVisible = true;
     },
     createColumn() {
-      const columnsIds = this.columns.map((column) => column.id);
-
-      let newColumn = {
-        id: null,
-        title: this.columnFormData.title,
-        color: this.columnFormData.color,
-        position: this.columnFormData.position,
-      };
-
-      const columnsWithAGreaterPosition = this.columns.filter(
-        (column) => column.position >= newColumn.position
-      );
-
-      columnsWithAGreaterPosition.forEach(function increaseOnePosition(column) {
-        column.position++;
-      });
-
-      if (columnsIds.length == 0) {
-        newColumn.id = 1;
-      } else {
-        const greatestColumnId = Math.max(...columnsIds);
-        newColumn.id = greatestColumnId + 1;
-      }
-
-      this.columns.push(newColumn);
-      window.localStorage.setItem("columns", JSON.stringify(this.columns));
-      this.cleanColumnForm();
-      this.cleanALLAuxiliaryVariables();
-    },
-    saveColumnEdition() {
-      const editedColumnIndex = this.columns.findIndex(
-        (column) => column.id == this.columnFormData.id
-      );
-
-      const editedColumn = {
-        id: this.columnFormData.id,
-        title: this.columnFormData.title,
-        color: this.columnFormData.color,
-        position: this.columnFormData.position,
-      };
-
-      const oldTitle = this.oldColumn.title;
-      const newTitle = editedColumn.title;
-
-      if (oldTitle.trim() != newTitle.trim()) {
-        const cardsToUpdate = this.cards.filter(
-          (card) => card.status == oldTitle
-        );
-
-        cardsToUpdate.forEach(function changeColumnName(card) {
-          card.status = newTitle.trim();
+      axios
+        .post("http://127.0.0.1:3000/kanban_columns", {
+          title: this.columnFormData.title,
+          color: this.columnFormData.color,
+          position: this.columnFormData.position,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
         });
 
-        window.localStorage.setItem("cards", JSON.stringify(this.cards));
-      }
+      window.location.reload();
+    },
+    saveColumnEdition() {
+      axios
+        .put("http://127.0.0.1:3000/kanban_columns/" + this.columnFormData.id, {
+          title: this.columnFormData.title,
+          color: this.columnFormData.color,
+          position: this.columnFormData.position,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
 
-      const oldPosition = this.oldColumn.position;
-      const newPosition = editedColumn.position;
-
-      if (oldPosition < newPosition) {
-        const columnsToModify = this.columns.filter(
-          (column) =>
-            column.position <= newPosition && column.position > oldPosition
-        );
-        columnsToModify.forEach((column) => column.position--);
-      }
-
-      if (oldPosition > newPosition) {
-        const columnsToModify = this.columns.filter(
-          (column) =>
-            column.position >= newPosition && column.position < oldPosition
-        );
-        columnsToModify.forEach((column) => column.position++);
-      }
-
-      this.columns.splice(editedColumnIndex, 1, editedColumn);
-
-      window.localStorage.setItem("columns", JSON.stringify(this.columns));
-      this.oldColumn = {};
-      this.dialogColumnFormVisible = false;
-      this.cleanColumnForm();
-      this.cleanALLAuxiliaryVariables();
+      window.location.reload();
     },
     saveCardEdition() {
       const editedCardIndex = this.cards.findIndex(
@@ -479,6 +418,22 @@ export default {
       this.isEditingColumn = false;
       this.isEditingCard = false;
     },
+    async loadColumns() {
+      try {
+        this.isLoading = true;
+        this.columns = [];
+        const response = await axios.get(
+          "http://127.0.0.1:3000/kanban_columns"
+        );
+        this.columns = response.data;
+        this.isLoading = false;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  },
+  mounted() {
+    this.loadColumns();
   },
 };
 </script>
