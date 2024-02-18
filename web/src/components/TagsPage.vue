@@ -3,7 +3,7 @@ h1(style="text-align: center;") Tags
 div(style="text-align: center;")
   el-form(:inline="true" :model="tagForm" label-width="120px")
     el-form-item
-      el-input(v-model="tagForm.text" placeholder="Text")
+      el-input(v-model="tagForm.label" placeholder="Text")
     el-form-item
       el-select(v-model="tagForm.color" placeholder="Color")
         el-option.bolder(label="Teal" value="" style="color: #008080;")
@@ -16,104 +16,141 @@ div(style="text-align: center;")
         box-icon(v-if="textBeforeEdition != undefined" name="edit-alt" color="white")
         box-icon(v-else name="plus" color="white")
 
-  table
-    tr(v-for="tag in tags" :key="tag.text")
+
+  table(v-if="!isLoading")
+    tr(v-for="tag in tags" :key="tag.label")
       td
-        el-tag.custom-tag(:type='tag.color' effect="dark" size="large") {{ tag.text }}
+        el-tag.custom-tag(:type='tag.color' effect="dark" size="large") {{ tag.label }}
       td
         box-icon.tag-action-icon(name='edit' type="solid" color="teal" @click="editTag(tag)")
         box-icon.tag-action-icon(name='trash' type="solid" color="red" @click="removeTag(tag)")
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "TagsPage",
   data() {
     return {
       tagForm: {
-        text: "",
+        label: "",
         color: "",
       },
-      tags: JSON.parse(window.localStorage.getItem("tags")) || [],
+      tags: [],
       textBeforeEdition: undefined,
+      isLoading: true,
     };
   },
   methods: {
     createTag() {
-      this.upperTagText();
+      this.upperTagLabel();
       this.removeAditionalSpaces();
       if (this.isTagInvalid()) return;
 
       if (this.textBeforeEdition != undefined) {
-        const tag = { text: this.tagForm.text, color: this.tagForm.color };
-        const tagTexts = this.tags.map((tag) => tag.text);
-        const findCurrentText = (text) => text == this.textBeforeEdition;
-        const tagIndex = tagTexts.findIndex(findCurrentText);
-        console.log(tagIndex);
+        const editedTagId = this.tags.find(
+          (tag) => tag.label == this.textBeforeEdition
+        ).id;
 
-        this.tags.splice(tagIndex, 1, tag);
-        window.localStorage.setItem("tags", JSON.stringify(this.tags));
+        axios
+          .put("http://127.0.0.1:3000/tags/" + editedTagId, {
+            label: this.tagForm.label,
+            color: this.tagForm.color,
+          })
+          .then(function (response) {
+            console.log(response);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+
         this.textBeforeEdition = undefined;
       } else {
-        this.saveTag();
+        axios
+          .post("http://127.0.0.1:3000/tags", {
+            label: this.tagForm.label,
+            color: this.tagForm.color,
+          })
+          .then(function (response) {
+            console.log(response);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
       }
 
+      // retirar esse reload aqui depois
+      window.location.reload();
       this.cleanTagForm();
     },
-    upperTagText() {
-      this.tagForm.text = this.tagForm.text.toUpperCase();
+    upperTagLabel() {
+      this.tagForm.label = this.tagForm.label.toUpperCase();
     },
     removeAditionalSpaces() {
-      this.tagForm.text = this.tagForm.text.trim();
+      this.tagForm.label = this.tagForm.label.trim();
     },
     isTagInvalid() {
       if (this.isTagEmpty() || this.isTagRepeated()) return true;
       return false;
     },
     isTagEmpty() {
-      return this.tagForm.text == "" ? true : false;
+      return this.tagForm.label == "" ? true : false;
     },
     isTagRepeated() {
-      if (this.textBeforeEdition != undefined) return false;
+      if (this.tags.length == 0) return false;
+      if (this.textBeforeEdition == this.tagForm.label) return false;
 
-      const tagTexts = this.tags.map((tag) => tag.text);
-      const currentTagText = this.tagForm.text;
-      const findCurrentText = (text) => text == currentTagText;
+      const tagLabels = this.tags.map((tag) => tag.label);
+      const currentTagLabel = this.tagForm.label;
+      const findCurrentLabel = (text) => text == currentTagLabel;
 
-      if (tagTexts.findIndex(findCurrentText) != -1) {
+      if (tagLabels.findIndex(findCurrentLabel) != -1) {
         return true;
       } else {
         return false;
       }
     },
-    saveTag() {
-      this.tags.push({
-        text: this.tagForm.text,
-        color: this.tagForm.color,
-      });
-      window.localStorage.setItem("tags", JSON.stringify(this.tags));
-    },
     cleanTagForm() {
-      this.tagForm.text = this.tagForm.color = "";
+      this.tagForm.label = this.tagForm.color = "";
     },
     removeTag(tag) {
-      const tagTexts = this.tags.map((tag) => tag.text);
-      const findCurrentText = (text) => text == tag.text;
-      const tagIndex = tagTexts.findIndex(findCurrentText);
+      axios
+        .delete("http://127.0.0.1:3000/tags/" + tag.id)
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
 
-      this.tags.splice(tagIndex, 1);
-      window.localStorage.setItem("tags", JSON.stringify(this.tags));
+      // retirar esse reload aqui depois
+      window.location.reload();
     },
     editTag(tag) {
-      this.textBeforeEdition = tag.text;
+      this.textBeforeEdition = tag.label;
       this.putTagDataOnForm(tag);
     },
     putTagDataOnForm(tag) {
       this.tagForm = {
-        text: tag.text,
+        label: tag.label,
         color: tag.color,
       };
     },
+    async loadTags() {
+      try {
+        this.isLoading = true;
+        this.tags = [];
+        const response = await axios.get("http://127.0.0.1:3000/tags");
+        this.tags = response.data;
+        this.isLoading = false;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  },
+  mounted() {
+    this.loadTags();
   },
 };
 </script>
