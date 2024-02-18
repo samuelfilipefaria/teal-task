@@ -24,6 +24,9 @@ div(style="text-align: center;")
       td
         box-icon.tag-action-icon(name='edit' type="solid" color="teal" @click="editTag(tag)")
         box-icon.tag-action-icon(name='trash' type="solid" color="red" @click="removeTag(tag)")
+
+el-dialog(v-model='invalidDataWarningDialog' title='Dados inválidos!' width='500')
+  p Etiquetas não podem ter nomes vazios ou repetidos!
 </template>
 
 <script>
@@ -40,13 +43,17 @@ export default {
       tags: [],
       textBeforeEdition: undefined,
       isLoading: true,
+      invalidDataWarningDialog: false,
     };
   },
   methods: {
     createTag() {
       this.upperTagLabel();
       this.removeAditionalSpaces();
-      if (this.isTagInvalid()) return;
+      if (this.isTagInvalid()) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
 
       if (this.textBeforeEdition != undefined) {
         const editedTagId = this.tags.find(
