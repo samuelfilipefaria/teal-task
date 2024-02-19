@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_02_18_060134) do
+ActiveRecord::Schema[7.1].define(version: 2024_02_19_002000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "kanban_cards", force: :cascade do |t|
+    t.bigint "kanban_column_id"
+    t.string "title"
+    t.string "description"
+    t.integer "position"
+    t.date "due_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kanban_column_id"], name: "index_kanban_cards_on_kanban_column_id"
+  end
 
   create_table "kanban_columns", force: :cascade do |t|
     t.string "title"
@@ -29,4 +40,5 @@ ActiveRecord::Schema[7.1].define(version: 2024_02_18_060134) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "kanban_cards", "kanban_columns"
 end
