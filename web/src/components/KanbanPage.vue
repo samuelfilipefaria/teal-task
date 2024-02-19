@@ -24,9 +24,9 @@ el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='50
       el-input(type="textarea" v-model="cardFormData.description" placeholder="Descrição")
     el-form-item
       el-select(v-model='cardFormData.status' placeholder='Coluna')
-        el-option(v-for='column in columns' :key='column.title' :label='column.title' :value='column.title')
+        el-option(v-for='column in columns' :key='column.id' :label='column.title' :value='column.title')
     el-form-item
-      el-date-picker(v-model='cardFormData.dueDate' type='date' placeholder='Data de entrega')
+      el-date-picker(v-model='cardFormData.due_date' type='date' placeholder='Data de entrega')
     el-form-item
       el-button.custom-button(v-if="isEditingCard" @click="saveCardEdition" size="large")
         box-icon(name="edit" color="white")
@@ -60,7 +60,7 @@ el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
   p(v-else style="font-style: italic; font-weight: bold;") Sem descrição
 
   h2 Estado
-  p {{ currentCard.status }}
+  p {{ cardColumnTitle(currentCard) }}
 
   h2 Data de entrega
   p {{ dateInBrazilianFormat }}
@@ -92,7 +92,7 @@ export default {
       currentColumn: {},
       oldColumn: {},
       columns: [],
-      cards: JSON.parse(window.localStorage.getItem("cards")) || [],
+      cards: [],
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
       dialogShowCard: false,
@@ -103,7 +103,7 @@ export default {
         description: "",
         status: "",
         position: "",
-        dueDate: new Date(),
+        due_date: new Date(),
       },
       columnFormData: {
         title: "",
@@ -123,7 +123,7 @@ export default {
           description: "",
           status: "",
           position: "",
-          dueDate: new Date(),
+          due_date: new Date(),
         };
 
         this.isEditingCard = false;
@@ -149,7 +149,7 @@ export default {
       return this.isEditingCard ? "Editando cartão" : "Novo cartão";
     },
     dateInBrazilianFormat() {
-      const date = new Date(this.currentCard.dueDate);
+      const date = new Date(this.currentCard.due_date);
 
       const day = date.getDate();
       const month = date.getMonth() + 1;
@@ -180,6 +180,10 @@ export default {
     },
   },
   methods: {
+    cardColumnTitle(card) {
+      return this.columns.find((column) => column.id == card.kanban_column_id)
+        .title;
+    },
     showDeleteColumnConfirmationDialog(column) {
       this.currentColumn = column;
       this.confirmationDeletionColumnDialog = true;
@@ -213,21 +217,16 @@ export default {
       this.confirmationDeletionCardDialog = false;
       this.dialogShowCard = false;
 
-      const deletedCardIndex = this.cards.findIndex(
-        (card) => card.id == this.currentCard.id
-      );
+      axios
+        .delete("http://127.0.0.1:3000/kanban_cards/" + this.currentCard.id)
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
 
-      const cardsWithAGreaterPosition = this.cards.filter(
-        (card) => card.position > this.currentCard.position
-      );
-
-      cardsWithAGreaterPosition.forEach(function decreaseOnePosition(card) {
-        card.position--;
-      });
-
-      this.cards.splice(deletedCardIndex, 1);
-
-      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+      window.location.reload();
     },
     orderedColumns() {
       return this.columns.sort(function (a, b) {
@@ -241,53 +240,19 @@ export default {
       });
     },
     updateBlock(blockId, newState, index) {
-      const foundCard = this.cards.find((card) => card.id == blockId);
-
-      if (newState == foundCard.status) {
-        if (index < foundCard.position) {
-          this.cards
-            .filter((card) => card.status == foundCard.status)
-            .forEach(function (card) {
-              if (
-                card.position < foundCard.position &&
-                card.position >= index
-              ) {
-                card.position++;
-              }
-            });
-        } else if (index > foundCard.position) {
-          this.cards
-            .filter((card) => card.status == foundCard.status)
-            .forEach(function (card) {
-              if (
-                card.position > foundCard.position &&
-                card.position <= index
-              ) {
-                card.position--;
-              }
-            });
-        }
-      } else {
-        this.cards
-          .filter((card) => card.status == foundCard.status)
-          .forEach(function (card) {
-            if (card.position > foundCard.position) {
-              card.position--;
-            }
-          });
-        this.cards
-          .filter((card) => card.status == newState)
-          .forEach(function (card) {
-            if (card.position >= index) {
-              card.position++;
-            }
-          });
-      }
-
-      foundCard.status = newState;
-      foundCard.position = index;
-
-      window.localStorage.setItem("cards", JSON.stringify(this.cards));
+      axios
+        .put("http://127.0.0.1:3000/kanban_cards/" + blockId, {
+          kanban_column_id: this.columns.find(
+            (column) => column.title == newState
+          ).id,
+          position: index + 1,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     },
     openNewCardForm() {
       this.dialogCardFormVisible = true;
@@ -328,29 +293,42 @@ export default {
       window.location.reload();
     },
     saveCardEdition() {
-      const editedCardIndex = this.cards.findIndex(
-        (card) => card.id == this.currentCard.id
-      );
+      axios
+        .put("http://127.0.0.1:3000/kanban_cards/" + this.currentCard.id, {
+          kanban_column_id: this.columns.find(
+            (column) => column.title == this.cardFormData.status
+          ).id,
+          title: this.cardFormData.title,
+          description: this.cardFormData.description,
+          due_date: this.cardFormData.due_date,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
 
-      const editedCard = {
-        id: this.currentCard.id,
-        title: this.cardFormData.title,
-        description: this.cardFormData.description,
-        status: this.cardFormData.status,
-        position: this.cardFormData.position,
-        dueDate: this.cardFormData.dueDate,
-      };
-
-      this.cards.splice(editedCardIndex, 1, editedCard);
-
-      window.localStorage.setItem("cards", JSON.stringify(this.cards));
-      this.dialogCardFormVisible = false;
-      this.cleanALLAuxiliaryVariables();
+      window.location.reload();
     },
     createCard() {
-      this.saveCard();
-      this.cleanCardForm();
-      this.cleanALLAuxiliaryVariables();
+      axios
+        .post("http://127.0.0.1:3000/kanban_cards/", {
+          kanban_column_id: this.columns.find(
+            (column) => column.title == this.cardFormData.status
+          ).id,
+          title: this.cardFormData.title,
+          description: this.cardFormData.description,
+          due_date: this.cardFormData.due_date,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+
+      window.location.reload();
     },
     saveCard() {
       const cards_ids = this.cards.map((card) => card.id);
@@ -361,7 +339,7 @@ export default {
         description: this.cardFormData.description,
         status: this.cardFormData.status,
         position: 0,
-        dueDate: this.cardFormData.dueDate,
+        due_date: this.cardFormData.due_date,
       };
 
       if (cards_ids.length == 0) {
@@ -388,7 +366,7 @@ export default {
       this.cardFormData.title = "";
       this.cardFormData.description = "";
       this.cardFormData.status = "";
-      this.cardFormData.dueDate = new Date();
+      this.cardFormData.due_date = new Date();
     },
     cleanColumnForm() {
       this.columnFormData.title = "";
@@ -408,7 +386,7 @@ export default {
         description: "",
         status: "",
         position: "",
-        dueDate: new Date(),
+        due_date: new Date(),
       };
       this.columnFormData = {
         title: "",
@@ -431,9 +409,21 @@ export default {
         console.error(error);
       }
     },
+    async loadCards() {
+      try {
+        this.isLoading = true;
+        this.cards = [];
+        const response = await axios.get("http://127.0.0.1:3000/kanban_cards");
+        this.cards = response.data;
+        this.isLoading = false;
+      } catch (error) {
+        console.error(error);
+      }
+    },
   },
   mounted() {
     this.loadColumns();
+    this.loadCards();
   },
 };
 </script>

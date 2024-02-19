@@ -19,7 +19,7 @@ class KanbanCardsController < ApplicationController
       kanban_column: KanbanColumn.find(params[:kanban_column_id]),
       title: params[:title],
       description: params[:description],
-      position: cards_last_position + 1,
+      position: last_position_in_the_same_column(params[:kanban_column_id]) + 1,
       due_date: params[:due_date],
     )
 
@@ -39,8 +39,22 @@ class KanbanCardsController < ApplicationController
     end
 
     if params[:position]
+      if card.kanban_column_id == params[:kanban_column_id]
+
+        if params[:position] > card.position
+          decrease_cards_in_the_range(card.position, params[:position], card.kanban_column_id)
+        end
+        if params[:position] < card.position
+          increase_cards_in_the_range(card.position, params[:position], card.kanban_column_id)
+        end
+
+      else
+        decrease_position_on_the_posterior_cards(card)
+        increase_position_on_the_posterior_cards_in_the_new_column(params[:position], params[:kanban_column_id])
+      end
+
       card.update(
-        kanban_column: card.kanban_column,
+        kanban_column: KanbanColumn.find(params[:kanban_column_id]),
         title: card.title,
         description: card.description,
         position: params[:position],
@@ -69,13 +83,28 @@ class KanbanCardsController < ApplicationController
     card.destroy
   end
 
+  def decrease_cards_in_the_range(current_position, new_position, column_id)
+    cards_in_the_range = KanbanCard.all.select {|comparing_card| comparing_card.kanban_column_id == column_id && comparing_card.position <= new_position && comparing_card.position > current_position}
+    cards_in_the_range.each {|comparing_card| comparing_card.update(position: comparing_card.position - 1)}
+  end
+
+  def increase_cards_in_the_range(current_position, new_position, column_id)
+    cards_in_the_range = KanbanCard.all.select {|comparing_card| comparing_card.kanban_column_id == column_id && comparing_card.position >= new_position && comparing_card.position < current_position}
+    cards_in_the_range.each {|comparing_card| comparing_card.update(position: comparing_card.position + 1)}
+  end
+
   def decrease_position_on_the_posterior_cards(card)
-    cards_with_larger_position = KanbanCard.all.select {|comparing_card| comparing_card.position > card.position}
+    cards_with_larger_position = KanbanCard.all.select {|comparing_card| comparing_card.kanban_column_id == card.kanban_column_id && comparing_card.position > card.position}
     cards_with_larger_position.each {|comparing_card| comparing_card.update(position: comparing_card.position - 1)}
   end
 
-  def cards_last_position
-    cards_positions = KanbanCard.all.map {|card| card.position}
+  def increase_position_on_the_posterior_cards_in_the_new_column(new_position, new_column_id)
+    cards_with_larger_position = KanbanCard.all.select {|comparing_card| comparing_card.kanban_column_id == new_column_id && comparing_card.position >= new_position}
+    cards_with_larger_position.each {|comparing_card| comparing_card.update(position: comparing_card.position + 1)}
+  end
+
+  def last_position_in_the_same_column(kanban_column_id)
+    cards_positions = KanbanCard.all.select {|comparing_card| comparing_card.kanban_column_id == kanban_column_id}.map {|card| card.position}
     cards_positions.max || 0
   end
 end
