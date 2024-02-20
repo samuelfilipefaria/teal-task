@@ -22,7 +22,7 @@ export default {
   },
   computed: {
     dialogTitle() {
-      return `Tarefas agendadas para ${this.formattedSelectedDate}`;
+      return `Tarefas com vencimento em ${this.formattedSelectedDate}`;
     },
     formattedSelectedDate() {
       return `${this.selectedDate.getDate()}/

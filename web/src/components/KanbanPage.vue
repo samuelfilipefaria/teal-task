@@ -21,9 +21,9 @@ div
 el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='500' fullscreen)
   el-form
     el-form-item
-      el-input(v-model="cardFormData.title" placeholder="Título")
+      el-input(v-model="cardFormData.title" placeholder="Título" required)
     el-form-item
-      el-input(type="textarea" v-model="cardFormData.description" placeholder="Descrição")
+      el-input(type="textarea" v-model="cardFormData.description" placeholder="Descrição (opcional)")
     el-form-item
       el-select(v-model='cardFormData.status' placeholder='Coluna')
         el-option(v-for='column in columns' :key='column.id' :label='column.title' :value='column.title')
@@ -32,13 +32,20 @@ el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='50
     el-form-item
       el-select(v-model='tagsIdsOnCard' multiple placeholder='Tags' style='width: 240px')
         el-option(v-for='tag in tags' :key='tag.id' :label='tag.label' :value='tag.id')
+      span(style="margin-left: 5px;") Atenção: as tags selecionadas irão substituir as atuais
     el-form-item
+    h4 Tags atuais neste card:
+    h4(v-if="!currentCard.tags") sem tags
+    tr(v-for="tag in currentCard.tags" :key="tag.id")
+      td
+        el-tag.custom-tag(:type='tag.color' effect="dark" size="large" style="font-weight: bold;") {{ tag.label }}
+    el-form-item(style="margin-top: 20px;")
       el-button.custom-button(v-if="isEditingCard" @click="saveCardEdition" size="large")
         box-icon(name="edit" color="white")
       el-button.custom-button(v-else @click="createCard" size="large")
         box-icon(name="plus" color="white")
 
-el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500' fullscreen)
+el-dialog(v-model='dialogColumnFormVisible' :title='dialogColumnFormTitle' width='500' fullscreen)
   el-form
     el-form-item
       el-input(v-model="columnFormData.title" placeholder="Título")
@@ -61,7 +68,7 @@ el-dialog(v-model='dialogColumnFormVisible' title='Nova coluna' width='500' full
 
 el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
   h2 Descrição
-  p(v-if="currentCard.description.trim() != ''") {{ currentCard.description }}
+  p(v-if="isThereADescription") {{ currentCard.description }}
   p(v-else style="font-style: italic; font-weight: bold;") Sem descrição
 
   h2 Estado
@@ -89,6 +96,8 @@ el-dialog(v-model='confirmationDeletionColumnDialog' title='Confirmação' width
   p Tem certeza que deseja deletar essa coluna? <b>TODOS</b> os cartões presentes nela serão também deletados. Essa ação não poderá ser desfeita.
   div(style="text-align: center;")
     el-button(@click="deleteColumn()") Sim
+el-dialog(v-model='invalidDataWarningDialog' title='Dados inválidos!' width='500')
+  p Verifique os dados e tente novamente
 </template>
 
 <script>
@@ -126,6 +135,7 @@ export default {
       isEditingColumn: false,
       isEditingCard: false,
       isLoading: true,
+      invalidDataWarningDialog: false,
     };
   },
   watch: {
@@ -143,7 +153,7 @@ export default {
         };
 
         this.isEditingCard = false;
-        this.cleanALLAuxiliaryVariables();
+        // this.cleanALLAuxiliaryVariables();
       }
     },
     dialogColumnFormVisible(visibility) {
@@ -156,22 +166,39 @@ export default {
 
         this.oldColumn = {};
         this.isEditingColumn = false;
-        this.cleanALLAuxiliaryVariables();
+        // this.cleanALLAuxiliaryVariables();
       }
     },
   },
   computed: {
+    isThereADescription() {
+      if (this.currentCard.description == undefined) return false;
+      if (this.currentCard.description.trim() == "") return false;
+      return true;
+    },
     dialogCardFormTitle() {
       return this.isEditingCard ? "Editando cartão" : "Novo cartão";
     },
+    dialogColumnFormTitle() {
+      return this.isEditingColumn ? "Editando coluna" : "Nova coluna";
+    },
     dateInBrazilianFormat() {
-      const date = new Date(this.currentCard.due_date);
+      if (
+        this.currentCard.due_date instanceof Date &&
+        !isNaN(this.currentCard.due_date.valueOf())
+      ) {
+        let dueDateDay = this.currentCard.due_date.getDate();
+        let dueDateMonth = this.currentCard.due_date.getMonth() + 1;
+        let dueDateYear = this.currentCard.due_date.getFullYear();
 
-      const day = date.getDate();
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
+        return `${dueDateDay}/${dueDateMonth}/${dueDateYear}`;
+      } else {
+        let dueDateDay = this.currentCard.due_date.split("-")[2];
+        let dueDateMonth = this.currentCard.due_date.split("-")[1];
+        let dueDateYear = this.currentCard.due_date.split("-")[0];
 
-      return `${day}/${month}/${year}`;
+        return `${dueDateDay}/${dueDateMonth}/${dueDateYear}`;
+      }
     },
     columnsPositions() {
       const lastPosition = Math.max(
@@ -244,6 +271,9 @@ export default {
     editCard() {
       this.isEditingCard = true;
       this.cardFormData = this.currentCard;
+      this.cardFormData.status = this.columns.find(
+        (column) => column.id == this.cardFormData.kanban_column_id
+      ).title;
       this.dialogCardFormVisible = true;
     },
     deleteCard() {
@@ -294,6 +324,30 @@ export default {
       this.dialogColumnFormVisible = true;
     },
     createColumn() {
+      if (
+        this.columnFormData.title == undefined ||
+        this.columnFormData.title.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
+      if (
+        this.columnFormData.color == undefined ||
+        this.columnFormData.color.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
+      if (
+        this.columnFormData.position == undefined ||
+        this.columnFormData.position.toString().trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
       axios
         .post("http://127.0.0.1:3000/kanban_columns", {
           title: this.columnFormData.title,
@@ -310,6 +364,30 @@ export default {
       window.location.reload();
     },
     saveColumnEdition() {
+      if (
+        this.columnFormData.title == undefined ||
+        this.columnFormData.title.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
+      if (
+        this.columnFormData.color == undefined ||
+        this.columnFormData.color.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
+      if (
+        this.columnFormData.position == undefined ||
+        this.columnFormData.position.toString().trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
       axios
         .put("http://127.0.0.1:3000/kanban_columns/" + this.columnFormData.id, {
           title: this.columnFormData.title,
@@ -346,6 +424,22 @@ export default {
       window.location.reload();
     },
     createCard() {
+      if (
+        this.cardFormData.title == undefined ||
+        this.cardFormData.title.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
+      if (
+        this.cardFormData.status == undefined ||
+        this.cardFormData.status.trim() == ""
+      ) {
+        this.invalidDataWarningDialog = true;
+        return;
+      }
+
       axios
         .post("http://127.0.0.1:3000/kanban_cards/", {
           kanban_column_id: this.columns.find(
@@ -485,5 +579,12 @@ export default {
   margin-left: 10px;
   margin-top: 2px;
   cursor: pointer;
+}
+
+.custom-tag {
+  min-width: 100px;
+  font-size: 20px;
+  margin-bottom: 10px;
+  margin-top: 5px;
 }
 </style>
