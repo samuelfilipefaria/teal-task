@@ -78,6 +78,7 @@ export default {
           .post("http://127.0.0.1:3000/tags", {
             label: this.tagForm.label,
             color: this.tagForm.color,
+            user_id: localStorage.getItem("loggedUserId"),
           })
           .then(function (response) {
             console.log(response);

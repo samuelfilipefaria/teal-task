@@ -18,7 +18,8 @@ class KanbanColumnsController < ApplicationController
     new_column = KanbanColumn.new(
       title: params[:title],
       color: params[:color],
-      position: params[:position]
+      position: params[:position],
+      user: User.find(params[:user_id])
     )
 
     increase_position_on_the_posterior_columns(new_column)

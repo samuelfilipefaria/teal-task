@@ -17,7 +17,8 @@ class TagsController < ApplicationController
   def create
     new_tag = Tag.new(
       label: params[:label],
-      color: params[:color]
+      color: params[:color],
+      user: User.find(params[:user_id])
     )
 
     if new_tag.save

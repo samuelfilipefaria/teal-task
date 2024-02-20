@@ -353,6 +353,7 @@ export default {
           title: this.columnFormData.title,
           color: this.columnFormData.color,
           position: this.columnFormData.position,
+          user_id: localStorage.getItem("loggedUserId"),
         })
         .then(function (response) {
           console.log(response);
