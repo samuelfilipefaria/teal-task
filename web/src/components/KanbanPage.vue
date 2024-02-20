@@ -28,6 +28,9 @@ el-dialog(v-model='dialogCardFormVisible' :title="dialogCardFormTitle" width='50
     el-form-item
       el-date-picker(v-model='cardFormData.due_date' type='date' placeholder='Data de entrega')
     el-form-item
+      el-select(v-model='tagsIdsOnCard' multiple placeholder='Tags' style='width: 240px')
+        el-option(v-for='tag in tags' :key='tag.id' :label='tag.label' :value='tag.id')
+    el-form-item
       el-button.custom-button(v-if="isEditingCard" @click="saveCardEdition" size="large")
         box-icon(name="edit" color="white")
       el-button.custom-button(v-else @click="createCard" size="large")
@@ -65,6 +68,11 @@ el-dialog(v-model='dialogShowCard' :title='currentCard.title' width='500')
   h2 Data de entrega
   p {{ dateInBrazilianFormat }}
 
+  h2 Tags
+  tr(v-for="tag in currentCard.tags" :key="tag.id")
+    td
+      el-tag.custom-tag(:type='tag.color' effect="dark" size="large" style="font-weight: bold;") {{ tag.label }}
+
   template(#footer)
     .dialog-footer
       box-icon.tag-action-icon(@click="editCard()" type="solid" name="edit" color="teal")
@@ -88,11 +96,13 @@ export default {
   name: "KanbanPage",
   data() {
     return {
+      tagsIdsOnCard: [],
       currentCard: {},
       currentColumn: {},
       oldColumn: {},
       columns: [],
       cards: [],
+      tags: [],
       dialogCardFormVisible: false,
       dialogColumnFormVisible: false,
       dialogShowCard: false,
@@ -301,6 +311,7 @@ export default {
           title: this.cardFormData.title,
           description: this.cardFormData.description,
           due_date: this.cardFormData.due_date,
+          tags_ids: this.tagsIdsOnCard,
         })
         .then(function (response) {
           console.log(response);
@@ -320,6 +331,7 @@ export default {
           title: this.cardFormData.title,
           description: this.cardFormData.description,
           due_date: this.cardFormData.due_date,
+          tags_ids: this.tagsIdsOnCard,
         })
         .then(function (response) {
           console.log(response);
@@ -415,6 +427,18 @@ export default {
         this.cards = [];
         const response = await axios.get("http://127.0.0.1:3000/kanban_cards");
         this.cards = response.data;
+        console.log(this.cards);
+        this.isLoading = false;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async loadTags() {
+      try {
+        this.isLoading = true;
+        this.tags = [];
+        const response = await axios.get("http://127.0.0.1:3000/tags");
+        this.tags = response.data;
         this.isLoading = false;
       } catch (error) {
         console.error(error);
@@ -424,6 +448,7 @@ export default {
   mounted() {
     this.loadColumns();
     this.loadCards();
+    this.loadTags();
   },
 };
 </script>

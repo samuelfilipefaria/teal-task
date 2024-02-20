@@ -1,6 +1,12 @@
 class KanbanCardsController < ApplicationController
   def index
     cards = KanbanCard.all
+    tags = KanbanCard.all.map {|card| card.tags}
+
+    require 'json'
+    cards = JSON.parse(cards.to_json)
+    cards.each_with_index {|card, index| card["tags"] = JSON.parse(tags.to_json)[index]}
+
     render json: cards, status: 200
   end
 
@@ -21,6 +27,7 @@ class KanbanCardsController < ApplicationController
       description: params[:description],
       position: last_position_in_the_same_column(params[:kanban_column_id]) + 1,
       due_date: params[:due_date],
+      tags: Tag.find(params[:tags_ids]),
     )
 
     if new_card.save
@@ -59,6 +66,7 @@ class KanbanCardsController < ApplicationController
         description: card.description,
         position: params[:position],
         due_date: card.due_date,
+        tags: card.tags,
       )
     else
       card.update(
@@ -67,6 +75,7 @@ class KanbanCardsController < ApplicationController
         description: params[:description],
         position: card.position,
         due_date: params[:due_date],
+        tags: Tag.find(params[:tags_ids]),
       )
     end
   end
