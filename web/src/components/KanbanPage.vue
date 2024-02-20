@@ -1,5 +1,7 @@
 <template lang="pug">
 h1(style="text-align: center;") Kanban
+el-select(v-model='tagsIdsToFilter' multiple placeholder='Filtrar por tag' style='width: 240px')
+  el-option(v-for='tag in tags' :key='tag.id' :label='tag.label' :value='tag.id')
 div
   div(style="display: inline-block;")
     kanban-board(
@@ -96,6 +98,7 @@ export default {
   name: "KanbanPage",
   data() {
     return {
+      tagsIdsToFilter: [],
       tagsIdsOnCard: [],
       currentCard: {},
       currentColumn: {},
@@ -126,6 +129,9 @@ export default {
     };
   },
   watch: {
+    tagsIdsToFilter() {
+      this.loadCards();
+    },
     dialogCardFormVisible(visibility) {
       if (visibility == false && this.isEditingCard) {
         this.cardFormData = {
@@ -190,6 +196,23 @@ export default {
     },
   },
   methods: {
+    filterCards() {
+      if (this.tagsIdsToFilter.length != 0) {
+        var cardsToShow = [];
+
+        for (let i = 0; i < this.cards.length; i++) {
+          var cardTagsIds = this.cards[i].tags.map((tag) => tag.id);
+
+          if (
+            cardTagsIds.some((tagId) => this.tagsIdsToFilter.includes(tagId))
+          ) {
+            cardsToShow.push(this.cards[i]);
+          }
+        }
+
+        this.cards = cardsToShow;
+      }
+    },
     cardColumnTitle(card) {
       return this.columns.find((column) => column.id == card.kanban_column_id)
         .title;
@@ -427,8 +450,8 @@ export default {
         this.cards = [];
         const response = await axios.get("http://127.0.0.1:3000/kanban_cards");
         this.cards = response.data;
-        console.log(this.cards);
         this.isLoading = false;
+        this.filterCards();
       } catch (error) {
         console.error(error);
       }
