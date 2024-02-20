@@ -4,6 +4,16 @@ class UsersController < ApplicationController
     render json: users, status: 200
   end
 
+  def login
+    user = User.where("email = ? AND password = ?", params[:email], params[:password]).first
+
+    if user
+      render json: user, status: 200
+    else
+      render json: {error: "Usuário não encontrado!"}
+    end
+  end
+
   def show
     user = User.find(params[:id])
 

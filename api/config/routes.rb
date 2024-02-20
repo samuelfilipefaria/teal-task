@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   resources :kanban_columns, only: [:index, :show, :create, :update, :destroy]
   resources :kanban_cards, only: [:index, :show, :create, :update, :destroy]
   resources :users, only: [:index, :show, :create, :update, :destroy]
+  post "/users/login", to: "users#login"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

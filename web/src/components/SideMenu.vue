@@ -1,24 +1,28 @@
 <template lang="pug">
 h1.app-title Teal Task
 el-menu(class="menu")
-  router-link(to="/")
+  router-link(to="/account")
     el-menu-item(index="1")
+      box-icon(class="menu-icon" name='user' type="solid" size="25px")
+      template(#title) User
+  router-link(to="/")
+    el-menu-item(index="2")
       box-icon(class="menu-icon" name='home' type="solid" size="25px")
       template(#title) Home
   router-link(to="calendar")
-    el-menu-item(index="2")
+    el-menu-item(index="3")
       box-icon(class="menu-icon" name='calendar' type="solid" size="25px")
       template(#title) Calendar
   router-link(to="kanban")
-    el-menu-item(index="3")
+    el-menu-item(index="4")
       box-icon(class="menu-icon" name='dashboard' type="solid" size="25px")
       template(#title) Kanban
   router-link(to="tags")
-    el-menu-item(index="4")
+    el-menu-item(index="5")
       box-icon(class="menu-icon" name='purchase-tag' type="solid" size="25px")
       template(#title) Tags
   router-link(to="pomodoro")
-    el-menu-item(index="5")
+    el-menu-item(index="6")
       box-icon(class="menu-icon" name='timer' type="solid" size="25px")
       template(#title) Pomodoro
 </template>

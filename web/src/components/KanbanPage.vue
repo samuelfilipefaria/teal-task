@@ -563,6 +563,13 @@ export default {
     },
   },
   mounted() {
+    if (!localStorage.getItem("loggedUserId")) {
+      alert(
+        "É preciso estar logado em uma conta para usar esta funcionalidade!"
+      );
+      window.location.href = "/account";
+    }
+
     this.loadColumns();
     this.loadCards();
     this.loadTags();

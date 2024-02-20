@@ -19,5 +19,13 @@ export default {
       return `${currentDate.getDate()}/${currentDate.getMonth()}/${currentDate.getFullYear()}`;
     },
   },
+  mounted() {
+    if (!localStorage.getItem("loggedUserId")) {
+      alert(
+        "É preciso estar logado em uma conta para usar esta funcionalidade!"
+      );
+      window.location.href = "/account";
+    }
+  },
 };
 </script>
