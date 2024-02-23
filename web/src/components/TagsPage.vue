@@ -150,7 +150,9 @@ export default {
         this.isLoading = true;
         this.tags = [];
         const response = await axios.get("http://127.0.0.1:3000/tags");
-        this.tags = response.data;
+        this.tags = response.data.filter(
+          (tag) => tag.user_id == localStorage.getItem("loggedUserId")
+        );
         this.isLoading = false;
       } catch (error) {
         console.error(error);

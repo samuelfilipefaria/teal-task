@@ -143,6 +143,10 @@ export default {
       this.loadCards();
     },
     dialogCardFormVisible(visibility) {
+      if (visibility == true && !this.isEditingCard) {
+        this.currentCard.tags = [];
+      }
+
       if (visibility == false && this.isEditingCard) {
         this.cardFormData = {
           title: "",
@@ -533,7 +537,9 @@ export default {
         const response = await axios.get(
           "http://127.0.0.1:3000/kanban_columns"
         );
-        this.columns = response.data;
+        this.columns = response.data.filter(
+          (column) => column.user_id == localStorage.getItem("loggedUserId")
+        );
         this.isLoading = false;
       } catch (error) {
         console.error(error);
@@ -544,7 +550,11 @@ export default {
         this.isLoading = true;
         this.cards = [];
         const response = await axios.get("http://127.0.0.1:3000/kanban_cards");
-        this.cards = response.data;
+        this.cards = response.data.filter((card) =>
+          this.columns
+            .map((column) => column.id)
+            .includes(card.kanban_column_id)
+        );
         this.isLoading = false;
         this.filterCards();
       } catch (error) {
@@ -556,7 +566,9 @@ export default {
         this.isLoading = true;
         this.tags = [];
         const response = await axios.get("http://127.0.0.1:3000/tags");
-        this.tags = response.data;
+        this.tags = response.data.filter(
+          (tag) => tag.user_id == localStorage.getItem("loggedUserId")
+        );
         this.isLoading = false;
       } catch (error) {
         console.error(error);

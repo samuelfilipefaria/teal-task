@@ -1,10 +1,10 @@
 <template lang="pug">
 h1(style="text-align: center;") Conta
 div(v-if="areUserLogged && !isEditing" style="text-align: center;")
-  h1 Olá {{ loggedUserName }} 👋️
-  el-button.custom-button(@click="loadAccountEdition()" size="large") Editar conta
-  el-button.custom-button(@click="deleteAccountConfirmationDialog = true" size="large") Deletar conta
-  el-button.custom-button(@click="logoutAccount()" size="large") Sair da conta
+  h1(class="animate__animated animate__fadeInDown") Olá {{ loggedUserName }} 👋️
+  el-button.custom-button(class="animate__animated animate__bounceIn" @click="loadAccountEdition()" size="large") Editar conta
+  el-button.custom-button(class="animate__animated animate__bounceIn" @click="deleteAccountConfirmationDialog = true" size="large") Deletar conta
+  el-button.custom-button(class="animate__animated animate__bounceIn" @click="logoutAccount()" size="large") Sair da conta
 el-tabs(v-if="areUserLogged && isEditing" type='border-card')
   el-tab-pane(label='Editar conta')
     h4 Editar conta
@@ -14,7 +14,7 @@ el-tabs(v-if="areUserLogged && isEditing" type='border-card')
       el-form-item(required)
         el-input(v-model="user.email" placeholder="E-mail")
       el-form-item(required)
-        el-input(v-model="user.password" placeholder="Senha")
+        el-input(v-model="user.password" type="password" placeholder="Senha")
       el-form-item
         el-button.custom-button(@click="editAccount()" size="large") Salvar edição
 
@@ -27,7 +27,7 @@ el-tabs(v-if="!areUserLogged && !isEditing" type='border-card')
       el-form-item(required)
         el-input(v-model="user.email" placeholder="E-mail")
       el-form-item(required)
-        el-input(v-model="user.password" placeholder="Senha")
+        el-input(v-model="user.password" type="password" placeholder="Senha")
       el-form-item
         el-button.custom-button(@click="createAccount()" size="large") Criar conta
   el-tab-pane(label='Login')
@@ -36,7 +36,7 @@ el-tabs(v-if="!areUserLogged && !isEditing" type='border-card')
       el-form-item(required)
         el-input(v-model="user.email" placeholder="E-mail")
       el-form-item(required)
-        el-input(v-model="user.password" placeholder="Senha")
+        el-input(v-model="user.password" type="password" placeholder="Senha")
       el-form-item
         el-button.custom-button(@click="loginAccount()" size="large") Entrar na conta
 el-dialog(v-model='invalidDataWarningDialog' title='Dados inválidos!' width='500')

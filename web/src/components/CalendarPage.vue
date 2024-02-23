@@ -1,6 +1,6 @@
 <template lang="pug">
 h1(style="text-align: center;") Calendar
-el-calendar(ref="mycal" v-model="selectedDate")
+el-calendar(ref="mycal" v-model="selectedDate" class="animate__animated animate__fadeIn")
 h1 {{ dialogTitle }}:
 ul
   li(v-for="task in tasksForTheDay" :key="task.id") {{ task.title }} | Estado atual: {{ getColumnName(task.kanban_column_id) }}
@@ -65,9 +65,13 @@ export default {
         this.isLoading = true;
         this.tasksForTheDay = [];
         const response = await axios.get("http://127.0.0.1:3000/kanban_cards");
-        this.tasksForTheDay = response.data.filter((card) =>
-          this.areTheSameDate(card.due_date)
-        );
+        this.tasksForTheDay = response.data
+          .filter((card) =>
+            this.columns
+              .map((column) => column.id)
+              .includes(card.kanban_column_id)
+          )
+          .filter((card) => this.areTheSameDate(card.due_date));
         this.isLoading = false;
       } catch (error) {
         console.error(error);
@@ -80,7 +84,9 @@ export default {
         const response = await axios.get(
           "http://127.0.0.1:3000/kanban_columns"
         );
-        this.columns = response.data;
+        this.columns = response.data.filter(
+          (column) => column.user_id == localStorage.getItem("loggedUserId")
+        );
         this.isLoading = false;
       } catch (error) {
         console.error(error);
