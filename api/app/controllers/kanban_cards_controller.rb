@@ -75,7 +75,7 @@ class KanbanCardsController < ApplicationController
         description: params[:description],
         position: card.position,
         due_date: params[:due_date],
-        tags: Tag.find(params[:tags_ids]),
+        tags: params[:tags_ids].length > 0 ? Tag.find(params[:tags_ids]) : card.tags,
       )
     end
   end
