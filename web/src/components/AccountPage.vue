@@ -1,7 +1,7 @@
 <template lang="pug">
 h1(style="text-align: center;") Conta
 div(v-if="areUserLogged && !isEditing" style="text-align: center;")
-  h1(class="animate__animated animate__fadeInDown") Olá {{ loggedUserName }} 👋️
+  h1(class="animate__animated animate__fadeInDown") Saudações {{ loggedUserName }} 👋️
   el-button.custom-button(class="animate__animated animate__bounceIn" @click="loadAccountEdition()" size="large") Editar conta
   el-button.custom-button(class="animate__animated animate__bounceIn" @click="deleteAccountConfirmationDialog = true" size="large") Deletar conta
   el-button.custom-button(class="animate__animated animate__bounceIn" @click="logoutAccount()" size="large") Sair da conta
